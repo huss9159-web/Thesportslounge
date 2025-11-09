@@ -101,7 +101,9 @@ app.use(async (req, res, next) => {
   }
 });
 
-
+app.get("/test", (req, res) => {
+  res.json({ ok: true });
+});
 // ---------------- AUTH ----------------
 app.post("/api/login", async (req, res) => {
   try {
