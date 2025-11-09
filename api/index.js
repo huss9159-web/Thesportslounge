@@ -355,11 +355,7 @@ app.delete("/api/bookings/:id", async (req, res) => {
 
 
 
-// Route index.html on root
-app.get("/", (req, res) => {
-  console.log(path.join(__dirname, "../public/index.html"),'path')
-  res.sendFile(path.join(__dirname, "../public/index.html"));
-});
+
 
 
 // ---------------- EXPORT FOR VERCEL ----------------
