@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import serverless from "serverless-http";
 
 import {connectDB} from "../db.js";
 import User from "../models/User.js";
@@ -370,4 +371,4 @@ if (process.env.NODE_ENV !== "vercel") {
 }
 
 // ---------------- EXPORT FOR VERCEL ----------------
-export default app;
+export default serverless(app);
