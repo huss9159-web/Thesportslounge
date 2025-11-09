@@ -5,7 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import serverless from "serverless-http";
 
-import { connectDB } from "../lib/db.js";
+import { connectDB } from "../db.js";
 import User from "../models/User.js";
 import Booking from "../models/Booking.js";
 import Settings from "../models/Settings.js";
