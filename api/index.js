@@ -4,44 +4,53 @@ import cors from "cors";
 import serverless from "serverless-http";
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-// Reuse DB connection (important for Vercel)
-let isConnected = false;
+// MongoDB cache to reuse connections
+let cached = global.mongoose || { conn: null, promise: null };
 
 async function connectDB() {
-  if (isConnected) return;
-  const MONGO_URI = process.env.MONGODB_URI ||
-  "mongodb+srv://huss9159_db_user:e1EJsWc6mPRtzo5B@cluster0.k7xnlso.mongodb.net/sportslounge";
-  if (!MONGO_URI) throw new Error("MONGO_URI not set");
-  await mongoose.connect(MONGO_URI, { dbName: "sportslounge" });
-  isConnected = true;
-  console.log("✅ MongoDB connected");
+  if (cached.conn) return cached.conn;
+  if (!cached.promise) {
+    const MONGO_URI = process.env.MONGO_URI;
+    if (!MONGO_URI) throw new Error("❌ Missing MONGO_URI env variable");
+
+    cached.promise = mongoose
+      .connect(MONGO_URI, {
+        dbName: "sportslounge",
+        bufferCommands: false,
+      })
+      .then((mongoose) => {
+        console.log("✅ MongoDB connected");
+        return mongoose;
+      })
+      .catch((err) => {
+        cached.promise = null; // reset on failure
+        throw err;
+      });
+  }
+  cached.conn = await cached.promise;
+  global.mongoose = cached;
+  return cached.conn;
 }
 
-// Middleware to ensure DB connection before each request
+// Middleware ensures DB is connected
 app.use(async (req, res, next) => {
   try {
     await connectDB();
     next();
   } catch (err) {
-    console.error("❌ MongoDB connection error:", err);
-    res.status(500).json({ error: "Database connection failed" });
+    console.error("MongoDB connection failed:", err);
+    res.status(500).json({ error: "Database not available" });
   }
 });
 
-// Example routes
-app.get("/", (req, res) => {
-  res.send("✅ Sports Lounge API is running on Vercel!");
-});
+// Routes
+app.get("/", (req, res) => res.send("✅ Sports Lounge API is running!"));
 
-app.get("/api/test", (req, res) => {
-  res.json({ message: "API working fine ✅" });
-});
+app.get("/api/test", (req, res) => res.json({ message: "API working fine ✅" }));
 
-// Example Mongo route (optional)
 app.get("/api/users", async (req, res) => {
   try {
     const users = await mongoose.connection.db.collection("users").find().toArray();
@@ -51,5 +60,5 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
-// Export as serverless handler
+// Wrap with serverless for Vercel
 export default serverless(app);
