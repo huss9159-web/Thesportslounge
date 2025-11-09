@@ -366,7 +366,7 @@ app.get("/", (req, res) => {
 
 // ---------------- EXPORT FOR VERCEL ----------------
 import serverless from "serverless-http";
-export const handler = serverless(app);
+export const handler = (app);
 export default handler;
 
 // ---------------- EXPORT FOR VERCEL ----------------
