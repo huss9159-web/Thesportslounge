@@ -355,15 +355,15 @@ app.delete("/api/bookings/:id", async (req, res) => {
 });
 
 // ---------------- SERVE STATIC ----------------
-app.use(express.static(path.join(__dirname, "..", "public")));
-app.get("*", (req, res) => {
-  // Only serve index.html if the path does NOT start with /api
-  if (!req.path.startsWith("/api")) {
-    res.sendFile(path.join(__dirname, "..", "public", "index.html"));
-  } else {
-    res.status(404).json({ error: "API route not found" });
-  }
+// Serve static files from the "public" folder
+app.use(express.static(path.join(__dirname, "../public")));
+
+// Route index.html on root
+app.get("/", (req, res) => {
+  console.log(path.join(__dirname, "../public/index.html"),'path')
+  res.sendFile(path.join(__dirname, "../public/index.html"));
 });
+
 // ---------------- LOCAL SERVER ----------------
 if (process.env.NODE_ENV !== "vercel") {
   const PORT = process.env.PORT || 3000;
@@ -371,4 +371,4 @@ if (process.env.NODE_ENV !== "vercel") {
 }
 
 // ---------------- EXPORT FOR VERCEL ----------------
-export default serverless(app);
+export default (app);

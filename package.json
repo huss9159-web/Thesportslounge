@@ -1,16 +1,11 @@
 {
-  "name": "sportslounge2-vercel-full",
+  "name": "sportslounge-vercel",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "echo \"No build step\""
+    "dev": "vercel dev"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^8.8.0",
-    "cors": "^2.8.5",
-    "serverless-http": "^3.1.0"
+    "mongoose": "^8.8.0"
   }
 }
