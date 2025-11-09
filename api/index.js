@@ -353,9 +353,7 @@ app.delete("/api/bookings/:id", async (req, res) => {
   res.json({ message: "Booking deleted" });
 });
 
-// ---------------- SERVE STATIC ----------------
-// Serve static files from the "public" folder
-app.use(express.static(path.join(__dirname, "../public")));
+
 
 // Route index.html on root
 app.get("/", (req, res) => {
@@ -366,8 +364,8 @@ app.get("/", (req, res) => {
 
 // ---------------- EXPORT FOR VERCEL ----------------
 import serverless from "serverless-http";
-export const handler = serverless(app);
-export default handler;
+export default serverless(app);
+
 
 // ---------------- EXPORT FOR VERCEL ----------------
 
