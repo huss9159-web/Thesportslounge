@@ -1,53 +1,85 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 import serverless from "serverless-http";
-import {connectDB} from "../db.js";
+import connectDB from "../db.js";
 import Booking from "../models/Booking.js";
 import User from "../models/User.js";
 import Settings from "../models/Settings.js";
-import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.get("/api/test", (req,res) => res.json({ ok: true }));
 
-
-
-// init default settings and admin user if missing
-let initDone = false;
-app.use(async (req,res,next) => {
-  try {
+// ---------------- CACHED DB CONNECTION ----------------
+let isConnected = false;
+async function initDB() {
+  if (!isConnected) {
     await connectDB();
-    if (!initDone) {
-      await init();
-      initDone = true;
-    }
-    next();
-  } catch(e) {
-    console.error(e);
-    res.status(500).json({ error: "Database not available" });
-  }
-});
-async function init() {
-  const s = await Settings.findOne();
-  if (!s) {
-    await Settings.create({ template: "Your booking is confirmed...", prefix: "...", timeFormat:"12", toastTimeout:5, autoSend:0, sendCredentials:1 });
-  }
-  const admin = await User.findOne({ username: "admin" });
-  if (!admin) {
-    await User.create({ username: "admin", password:"1234", phone:"000", role:"admin", name:"Administrator" });
+    isConnected = true;
   }
 }
 
+// ---------------- INIT DEFAULT SETTINGS AND USERS ----------------
+let initDone = false;
+async function init() {
+  if (initDone) return;
 
+  const s = await Settings.findOne();
+  if (!s) {
+    await Settings.create({
+      template: "Your booking is confirmed for The Sports Lounge on {date} ({day}) from {start} to {end}.",
+      prefix: "Booking available today at The Sports Lounge:",
+      timeFormat: "12",
+      toastTimeout: 5,
+      autoSend: 0,
+      sendCredentials: 1
+    });
+  }
+
+  const admin = await User.findOne({ username: "admin" });
+  if (!admin) {
+    await User.create({ username: "admin", password: "1234", phone: "000", role: "admin", name: "Administrator" });
+    await User.create({ username: "03001234567", password: "pass123", phone: "03001234567", role: "user", name: "Test User" });
+  }
+
+  initDone = true;
+}
+
+// ---------------- UTILITY FUNCTIONS ----------------
 function normalizePhone(p=""){ return (p||"").replace(/[^0-9]/g,""); }
 function gen6(){ return String(Math.floor(100000 + Math.random()*900000)); }
 function toMin(t){ const [hh,mm] = (t||"00:00").split(':').map(Number); return hh*60 + (mm||0); }
 function overlaps(a1,b1,a2,b2){ if (b1 <= a1) b1 += 24*60; if (b2 <= a2) b2 += 24*60; return Math.max(a1,a2) < Math.min(b1,b2); }
-// ---------------- AUTH ----------------
-app.get(/^\/(?!api).*/, (req,res) => {
+
+// ---------------- MIDDLEWARE ----------------
+app.use("/api", async (req,res,next) => {
+  console.log('here',req)
+  if (req.path === "/test") return next(); // skip DB
+  try {
+    await initDB();
+    await init();
+    next();
+  } catch(e) {
+    console.error("DB Init Error:", e);
+    res.status(500).json({ error: "Database not available" });
+  }
+});
+
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
+app.get("*", (req,res) => {
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+});
+
+// ---------------- AUTH ----------------
 app.post("/api/login", async (req,res) => {
   try {
     const { username, password } = req.body || {};
@@ -65,16 +97,15 @@ app.get("/api/users", async (req,res) => {
     let rows;
     if (!q) {
       rows = await User.find().sort({ username: 1 }).select("username phone name password role").lean();
-      // attach bookingCount
-      for (const r of rows) {
+      await Promise.all(rows.map(async r => {
         r.bookingCount = await Booking.countDocuments({ $or: [{ phone: r.phone }, { createdBy: r.username }] });
-      }
+      }));
     } else {
       const re = new RegExp(q, "i");
       rows = await User.find({ $or: [{ phone: re }, { name: re }, { username: re }] }).sort({ username: 1 }).select("username phone name password role").lean();
-      for (const r of rows) {
+      await Promise.all(rows.map(async r => {
         r.bookingCount = await Booking.countDocuments({ $or: [{ phone: r.phone }, { createdBy: r.username }] });
-      }
+      }));
     }
     res.json(rows || []);
   } catch(e){ res.status(500).json({ error: e.message }); }
@@ -112,7 +143,7 @@ app.post("/api/users/ensure", async (req,res) => {
     res.json({ created: true, user: { id: u._id, username: u.username, phone: u.phone, role: u.role, name: u.name }, password: pwd });
   } catch(e){ res.status(500).json({ error: e.message }); }
 });
-app.get("/api/test", (req,res) => res.json({ ok: true }));
+
 
 // ---------------- SETTINGS ----------------
 app.get("/api/settings", async (req,res) => {
@@ -292,17 +323,11 @@ app.delete("/api/bookings/:id", async (req,res) => {
   } catch(e){ res.status(500).json({ error: e.message }); }
 });
 
+// ---------------- SERVE INDEX.HTML ----------------
 app.get("*", (req,res) => {
-  res.status(200).sendFile("index.html", { root: require('path').join(__dirname, '..', 'public') });
+  res.status(200).sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
-if (!process.env.VERCEL) {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
-}
-
-// For Vercel
+// ---------------- EXPORT FOR VERCEL ----------------
 export default serverless(app);
-
-
 
