@@ -3,7 +3,6 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import serverless from "serverless-http";
 
 import {connectDB} from "../db.js";
 import User from "../models/User.js";
@@ -364,11 +363,11 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
-// ---------------- LOCAL SERVER ----------------
-if (process.env.NODE_ENV !== "vercel") {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
-}
 
 // ---------------- EXPORT FOR VERCEL ----------------
-export default (app);
+import serverless from "serverless-http";
+export const handler = serverless(app);
+export default handler;
+
+// ---------------- EXPORT FOR VERCEL ----------------
+
