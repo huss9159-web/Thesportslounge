@@ -266,18 +266,19 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch(e){ console.error(e); showToast('Unable to load day preview','error'); }
     }, 120);
   }
-
+  filterBtn.addEventListener("click", async () => { 
+    await renderAll(); }
+  );
+  clearFilterBtn.addEventListener("click", async () => {
+    fromDate.value = "";
+    toDate.value = "";
+    if (statusFilterSelect) statusFilterSelect.value = "All";
+    forceUserFilter = null;      // disable forced user filter
+    await renderAll();
+  });
   async function renderAll(){
-    filterBtn.addEventListener("click", async () => { 
-      await renderAll(); }
-    );
-    clearFilterBtn.addEventListener("click", async () => {
-      fromDate.value = "";
-      toDate.value = "";
-      if (statusFilterSelect) statusFilterSelect.value = "All";
-      forceUserFilter = null;      // disable forced user filter
-      await renderAll();
-    });
+    
+
     allList.innerHTML = '';
     try {
       const opts = {};
