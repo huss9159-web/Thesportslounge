@@ -1,6 +1,6 @@
-import { connectDB } from "../db.js";
-import User from "../models/User.js";
-import Booking from "../models/Booking.js";
+import { connectDB } from "../../db.js";
+import User from "../../models/User.js";
+import Booking from "../../models/Booking.js";
 
 export default async function handler(req, res) {
   try {
