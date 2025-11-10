@@ -1,5 +1,5 @@
 // api/bookings/free.js
-import { connectDB } from "../../lib/db.js";
+import { connectDB } from "../../db.js";
 import Booking from "../../models/Booking.js"; // adjust path if needed
 
 export default async function handler(req, res) {
