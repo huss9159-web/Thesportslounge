@@ -1,11 +1,24 @@
-// api/login.js
 import { connectDB } from "../db.js";
 import User from "../models/User.js";
 
 export default async function handler(req, res) {
-  await connectDB();
-  const { username, password } = req.body;
-  const user = await User.findOne({ username, password });
-  if (!user) return res.status(401).json({ error: "Invalid credentials" });
-  res.status(200).json({ user });
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
+
+  try {
+    await connectDB();
+    const { username, password } = req.body || {};
+    if (!username || !password)
+      return res.status(400).json({ error: "username & password required" });
+
+    const row = await User.findOne({ username, password })
+      .select("username phone role name")
+      .lean();
+    if (!row) return res.status(401).json({ error: "Invalid credentials" });
+
+    res.json({ success: true, user: row });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 }
