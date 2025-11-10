@@ -1,6 +1,6 @@
 // api/bookings/[id].js
 import { connectDB } from "../../db.js";
-import Booking from "../../../models/Booking.js";
+import Booking from "../../models/Booking.js";
 
 export default async function handler(req, res) {
   const { id } = req.query;
