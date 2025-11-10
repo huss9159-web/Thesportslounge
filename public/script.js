@@ -467,7 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         freeResults.appendChild(card);
       });
-      const text = (preText.value || defaultPrefixEl.value || settings.prefix || '') + '\n\n' + parts.join('\n\n');
+      const text = ( defaultPrefixEl.value || settings.prefix || '') + '\n\n' + parts.join('\n\n');
       freeResults.dataset.text = text;
     } catch (e) {
       console.error(e);
