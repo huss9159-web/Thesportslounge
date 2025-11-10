@@ -1,6 +1,6 @@
-import { connectDB } from "../db.js";
-import Booking from "../models/Booking.js";
-import User from "../models/User.js";
+import { connectDB } from "../../db.js";
+import Booking from "../../models/Booking.js";
+import User from "../../models/User.js";
 
 function normalizePhone(p = "") {
   return (p || "").replace(/[^0-9]/g, "");
