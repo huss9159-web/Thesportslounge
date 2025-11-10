@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const bookingForm = document.getElementById("bookingForm"), bookingIdEl = document.getElementById("bookingId");
   const nameEl = document.getElementById("name"), phoneEl = document.getElementById("phone");
   const dateEl = document.getElementById("date"), startInput = document.getElementById("startTime"), endInput = document.getElementById("endTime");
-  const statusEl = document.getElementById("status"), paymentStatusEl = document.getElementById("paymentStatus"), advanceEl = document.getElementById("advance"), commentsEl = document.getElementById("comments");
+  const statusEl = document.getElementById("status"), paymentStatusEl = document.getElementById("paymentStatus"), advanceEl = document.getElementById("advance"), totalAmountEl = document.getElementById("totalAmount"),commentsEl = document.getElementById("comments");
   const allList = document.getElementById("allList"), reservedListEl = document.getElementById("reservedList"), pendingListEl = document.getElementById("pendingList");
   const fromDate = document.getElementById("fromDate"), toDate = document.getElementById("toDate"), filterBtn = document.getElementById("filterBtn"), clearFilterBtn = document.getElementById("clearFilterBtn");
   const toastEl = document.getElementById("toast"), toastMsg = document.getElementById("toastMsg"), toastClose = document.getElementById("toastClose");
@@ -363,6 +363,7 @@ document.addEventListener("DOMContentLoaded", () => {
       endTime: endEl.value,
       status: (currentUser.role === 'admin') ? statusEl.value : 'Pending',
       paymentStatus: (currentUser.role === 'admin') ? paymentStatusEl.value : 'Unpaid',
+      totalAmount: (currentUser.role === 'admin') ? Number(totalAmountEl.value||0) : 0,
       advance: (currentUser.role === 'admin') ? Number(advanceEl.value||0) : 0,
       comments: commentsEl.value.trim(),
       createdBy: currentUser.username
@@ -419,18 +420,31 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function buildBookingMessage(booking, settingsObj, creds){
+    const remaining =
+  !isNaN(booking.totalAmount) && !isNaN(booking.advance)
+    ? booking.totalAmount - booking.advance
+    : '';
     const tpl = settingsObj.template || "Your booking is confirmed for The Sports Lounge on {date} ({day}) from {start} to {end}.";
     const use12 = settingsObj.timeFormat === '12';
     const dayLabel = formatDay(booking.date);
     const startFmt = toFriendly(booking.startTime, use12);
     const endFmt = toFriendly(booking.endTime, use12);
-    let text = tpl.replace(/\{name\}/g, booking.customerName || '').replace(/\{date\}/g, formatDateUI(booking.date) || booking.date).replace(/\{day\}/g, dayLabel || '').replace(/\{start\}/g, startFmt || '').replace(/\{end\}/g, endFmt || '');
+    let text = tpl
+    .replace(/\{name\}/g, booking.customerName || '')
+    .replace(/\{date\}/g, formatDateUI(booking.date) || booking.date)
+    .replace(/\{day\}/g, dayLabel || '')
+    .replace(/\{start\}/g, startFmt || '')
+    .replace(/\{end\}/g, endFmt || '')
+    .replace(/\{advance\}/g, booking.advance != null ? booking.advance : '')
+    .replace(/\{total\}/g, booking.totalAmount != null ? booking.totalAmount : '')
+    .replace(/\{status\}/g, booking.status || '')
+    .replace(/\{remaining\}/g, remaining);
     if (creds && settingsObj.sendCredentials) text += `\n\nLogin details:\nUser: ${creds.username}\nPass: ${creds.password}`;
     return text;
   }
 
   // inline actions
-  window.appEditBooking = async function(id){ if (currentUser.role !== 'admin') return alert('Only admin can edit'); try { const b = await API.getBooking(id); bookingIdEl.value = b.id; nameEl.value = b.customerName||''; phoneEl.value = b.phone||''; dateEl.value = b.date||new Date().toISOString().slice(0,10); startEl.value = b.startTime||'18:00'; endEl.value = b.endTime||'19:00'; statusEl.value = b.status||'Pending'; paymentStatusEl.value = b.paymentStatus||'Unpaid'; advanceEl.value = b.advance||0; commentsEl.value = b.comments||''; document.querySelector('.navbtn[data-tab="home"]').click(); } catch(e){ showToast('Could not load booking','error'); } };
+  window.appEditBooking = async function(id){ if (currentUser.role !== 'admin') return alert('Only admin can edit'); try { const b = await API.getBooking(id); bookingIdEl.value = b.id; nameEl.value = b.customerName||''; phoneEl.value = b.phone||''; dateEl.value = b.date||new Date().toISOString().slice(0,10); startEl.value = b.startTime||'18:00'; endEl.value = b.endTime||'19:00'; statusEl.value = b.status||'Pending'; paymentStatusEl.value = b.paymentStatus||'Unpaid'; advanceEl.value = b.advance||0; totalAmountEl.value = b.totalAmount||0; commentsEl.value = b.comments||''; document.querySelector('.navbtn[data-tab="home"]').click(); } catch(e){ showToast('Could not load booking','error'); } };
 
   window.appDeleteBooking = async function(id){ if (currentUser.role !== 'admin') return alert('Only admin can delete'); if (!confirm('Delete booking?')) return; try { await API.deleteBooking(id); showToast('Booking deleted','success'); await refreshAll(); } catch(e){ showToast('Unable to delete booking','error'); } };
 

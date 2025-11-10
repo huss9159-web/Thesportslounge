@@ -86,6 +86,7 @@ export default async function handler(req, res) {
           "endTime",
           "status",
           "paymentStatus",
+          "totalAmount",
           "advance",
           "comments",
           "createdBy",
@@ -129,6 +130,7 @@ export default async function handler(req, res) {
       const createdAt = new Date().toISOString();
       const createdBy = b.createdBy || phoneClean;
       const adv = Number(b.advance || 0);
+      console.log('booking',b);
       await Booking.create({
         id,
         customerName: b.customerName,
@@ -138,6 +140,7 @@ export default async function handler(req, res) {
         endTime: b.endTime,
         status: b.status || "Pending",
         paymentStatus: b.paymentStatus || "Unpaid",
+        totalAmount: Number(b.totalAmount || 0),
         advance: adv,
         comments: b.comments || "",
         createdBy,

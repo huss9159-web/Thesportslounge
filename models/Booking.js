@@ -8,6 +8,7 @@ const bookingSchema = new mongoose.Schema({
   endTime: String,
   status: String,
   paymentStatus: String,
+  totalAmount: { type: Number, default: 0 },
   advance: Number,
   comments: String,
   createdBy: String,
