@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     getBooking: async (id) => { const r = await fetch("/api/bookings/" + id); if (!r.ok) throw await r.json(); return r.json(); },
     saveBooking: async (b) => { const r = await fetch("/api/bookings", { method:"POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(b) }); const j = await r.json(); if (!r.ok) throw j; return j; },
     patchStatus: async (id,status) => { const r = await fetch("/api/bookings/" + id + "/status", { method:"PATCH", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ status }) }); const j = await r.json(); if (!r.ok) throw j; return j; },
-    deleteBooking: async (id) => { const r = await fetch("/api/bookings/" + id, { method:"DELETE" }); const j = await r.json(); if (!r.ok) throw j; return j; },
+    deleteBooking: async (id) => { const r = await fetch("/api/bookings/delete?id=" + id, { method:"DELETE" }); const j = await r.json(); if (!r.ok) throw j; return j; },
     getSettings: async () => { const r = await fetch("/api/settings"); if (!r.ok) throw await r.json(); return r.json(); },
     saveSettings: async (s) => { const r = await fetch("/api/settings", { method:"POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(s) }); const j = await r.json(); if (!r.ok) throw j; return j; },
     getFreeSlots: async (from,to,start,end) => { const qp = new URLSearchParams({ from, to, start, end }).toString(); const r = await fetch("/api/bookings/free?" + qp); if (!r.ok) throw await r.json(); return r.json(); },
