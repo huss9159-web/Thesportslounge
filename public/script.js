@@ -532,7 +532,6 @@ document.addEventListener("DOMContentLoaded", () => {
             document.querySelector('.navbtn[data-tab="all"]').click();
           });
           filterBtn.addEventListener("click", async () => { 
-            console.log('here');
             await renderAll(); }
           );
 
